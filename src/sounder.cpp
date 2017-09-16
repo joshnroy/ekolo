@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 
-void soundcallback(const std_msgs::String::ConstPtr& msg)
+void soundcallback(const sensor_msgs::PointCloud2::ConstPtr& msg)
 {
 }
 
