@@ -17,6 +17,7 @@ class SoundController {
 
     public:
         void displayPoints(sensor_msgs::PointCloud pc);
+        void updateCameraLocation(double ax, double ay, double az, double ux, double uy, double uz, double px, double py, double pz);
         SoundController();
         ~SoundController();
         // start variables
@@ -96,6 +97,19 @@ SoundController::~SoundController() {
     alcMakeContextCurrent(NULL);
     alcDestroyContext(context);
     alcCloseDevice(device);
+}
+
+void updateCameraLocation(double ax, double ay, double az, double ux, double uy, double uz, double px, double py, double pz) {
+    ALfloat listenerOri[] = { ax, ay, az, ux, uy, uz };
+
+    alListener3f(AL_POSITION, px, py, pz);
+    alListenerfv(AL_ORIENTATION, listenerOri);
+
+    error = alGetError();
+    if (error != AL_NO_ERROR) {
+        cout << "There was an error while moving the listener!" << endl;
+        return;
+    }
 }
 
 void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
