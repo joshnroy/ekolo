@@ -207,3 +207,7 @@ add_dependencies(sounder ekolo)
 add_executable(soundController src/soundController.cpp)
 target_link_libraries(soundController ${catkin_LIBRARIES} openal alut)
 add_dependencies(soundController ekolo)
+
+add_executable(soundControllerMoving src/soundControllerMoving.cpp)
+target_link_libraries(soundControllerMoving ${catkin_LIBRARIES} openal alut)
+add_dependencies(soundControllerMoving ekolo)

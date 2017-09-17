@@ -23,9 +23,12 @@ class SoundController {
         ALuint numSources;
         ALuint c_buffer;
         ALCcontext *context;
+	int maxSources;
 };
 
 SoundController::SoundController() {
+
+    maxSources = 10000;
     
     ALCdevice *device;
 
@@ -69,15 +72,25 @@ SoundController::SoundController() {
 
     ALuint source;
 
-    alGenSources((ALuint)1, &source);
+    cout << "test" << endl;
+//  alGenSources((ALuint)1, &source);
+    ALuint sourcesArray[maxSources];
+    sources = sourcesArray;
+    alGenSources((ALsizei)maxSources, sources);
+    cout << "close test" << endl;
     // check for errors
 
 
     error = alGetError();
+    cout << "a" << endl;
+    cout << (error != AL_NO_ERROR) << endl;
+    cout << "b" << endl;
     if (error != AL_NO_ERROR) {
         cout << "bad things happened while setting up the source";
         return;
     }
+    cout << "dsiojf" << endl;
+    
 
     alGenBuffers((ALuint)1, &c_buffer);
     // check for errors
@@ -121,64 +134,60 @@ SoundController::~SoundController() {
 
 void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
 
-    cout << "thing" << endl;
-    alDeleteSources(this->numSources, this->sources);
+//  alDeleteSources(this->numSources, this->sources);
     cout << "1" << endl;
 
-    int numPoints = pc.points.size();
-    if (numPoints > MAX_SOURCES) {
-        numPoints = MAX_SOURCES;
-    }
+//  int numPoints = pc.points.size();
+//  if (numPoints > MAX_SOURCES) {
+//      numPoints = MAX_SOURCES;
+//  }
     cout << "2" << endl;
-    cout << sources << ", " << numPoints << endl;
 
-
-    ALuint sourcesArray[numPoints];
-    sources = sourcesArray;
-    alGenSources((ALsizei)numPoints, sources);
     cout << "3" << endl;
 
-    // transform the Point32s into audio sources
-    for (int i = 0; i < numPoints; i++) {
-        geometry_msgs::Point32 curPt = pc.points[i];
+//  // transform the Point32s into audio sources
+//  for (int i = 0; i < numPoints; i++) {
+//      geometry_msgs::Point32 curPt = pc.points[i];
 
-        // first we assign the point's source a tone
-        alSourcei(sources[i], AL_BUFFER, c_buffer);
-        // check for errors
-        ALCenum error;
-        error = alGetError();
-        if (error != AL_NO_ERROR) {
-            cout << "could not assign buffer to source" << endl;
-            return;
-        }
+//      // first we assign the point's source a tone
+//      alSourcei(sources[i], AL_BUFFER, c_buffer);
+//      // check for errors
+//      ALCenum error;
+//      error = alGetError();
+//      if (error != AL_NO_ERROR) {
+//          cout << "could not assign buffer to source" << endl;
+//          return;
+//      }
 
-        // then we set the source to the point's position
-        alSourcef(sources[i], AL_PITCH, 1);
-        alSourcef(sources[i], AL_GAIN, 1);
-        alSource3f(sources[i], AL_POSITION, curPt.x, curPt.y, curPt.z);
-        alSource3f(sources[i], AL_VELOCITY, 0, 0, 0);
-        alSourcei(sources[i], AL_LOOPING, AL_TRUE);
-        error = alGetError();
-        if (error != AL_NO_ERROR) {
-            cout << "could not set source properties" << endl;
-            return;
-        }
+//      // then we set the source to the point's position
+//      alSourcef(sources[i], AL_PITCH, 1);
+//      alSourcef(sources[i], AL_GAIN, 1);
+//      alSource3f(sources[i], AL_POSITION, curPt.x, curPt.y, curPt.z);
+//      alSource3f(sources[i], AL_VELOCITY, 0, 0, 0);
+//      alSourcei(sources[i], AL_LOOPING, AL_TRUE);
+//      error = alGetError();
+//      if (error != AL_NO_ERROR) {
+//          cout << "could not set source properties" << endl;
+//          return;
+//      }
 
-        // start sound from the source
-        alSourcePlay(sources[i]);
-        error = alGetError();
-        if (error != AL_NO_ERROR) {
-            cout << "could not play source" << endl;
-            return;
-        }
-    }
+//      // start sound from the source
+//      alSourcePlay(sources[i]);
+//      error = alGetError();
+//      if (error != AL_NO_ERROR) {
+//          cout << "could not play source" << endl;
+//          return;
+//      }
+//  }
     cout << "4" << endl;
 
     cout << "finished" << endl;
+
+    return;
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "sound_library");
+    ros::init(argc, argv, "sound_controller_moving");
 
     SoundController sc;
 
