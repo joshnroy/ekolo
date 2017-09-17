@@ -21,8 +21,8 @@ class SoundController {
         ~SoundController();
         // start variables
         ALuint *sources;
-        ALuint numSources;
-        ALuint c_buffer;
+        ALuint numPoints;
+        ALuint *buffers;
         ALCcontext *context;
         mutex m;
 };
@@ -83,12 +83,57 @@ SoundController::SoundController() {
         return;
     }
 
-    alGenBuffers((ALuint)1, &c_buffer);
+
+    this->m.unlock();
+
+}
+
+SoundController::~SoundController() {
+    this->m.lock();
+	alDeleteSources(this->numPoints, this->sources);
+    alDeleteBuffers(this->numPoints, this->buffers);
+    ALCdevice *device = alcGetContextsDevice(context);
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(context);
+    alcCloseDevice(device);
+}
+
+void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
+
+    this->m.lock();
+
+    // this will store the error results
+    ALCenum error;
+
+    cout << "thing" << endl;
+    alDeleteSources(this->numPoints, this->sources);
+    cout << "1" << endl;
+
+    this->numPoints = pc.points.size();
+    if (this->numPoints > MAX_SOURCES)
+        this->numPoints = MAX_SOURCES;
+    cout << "2" << endl;
+    //cout << sources << ", " << numPoints << endl;
+
+
+    ALuint sourcesArray[this->numPoints];
+    sources = sourcesArray;
+    alGenSources((ALsizei)this->numPoints, sources);
+
+    error = alGetError();
+    if (error != AL_NO_ERROR) {
+        cout << "could not generate the sources";
+        return;
+    }
+
+    ALuint buffersArray[this->numPoints];
+    buffers = buffersArray;
+    alGenBuffers((ALuint)this->numPoints, buffers);
     // check for errors
 
     error = alGetError();
     if (error != AL_NO_ERROR) {
-        cout << "could not generate the buffer";
+        cout << "could not generate the buffers";
         return;
     }
 
@@ -103,58 +148,24 @@ SoundController::SoundController() {
         cout << "could not load .wav file" << endl;
         return;
     }
-    cout << "loaded .wav file successfully" << endl;
-    alBufferData(c_buffer, format, data, size, freq);
-    // check for errors
-    error = alGetError();
-    if (error != AL_NO_ERROR) {
-        cout << "could not load c_buffer" << error << endl;
-        return;
-    }
 
-    this->m.unlock();
-
-}
-
-SoundController::~SoundController() {
-    this->m.lock();
-	alDeleteSources(this->numSources, this->sources);
-    alDeleteBuffers(1, &c_buffer);
-    ALCdevice *device = alcGetContextsDevice(context);
-    alcMakeContextCurrent(NULL);
-    alcDestroyContext(context);
-    alcCloseDevice(device);
-}
-
-void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
-
-    this->m.lock();
-
-    cout << "thing" << endl;
-    alDeleteSources(this->numSources, this->sources);
-    cout << "1" << endl;
-
-    int numPoints = pc.points.size();
-    if (numPoints > MAX_SOURCES) {
-        numPoints = MAX_SOURCES;
-    }
-    cout << "2" << endl;
-    cout << sources << ", " << numPoints << endl;
-
-
-    ALuint sourcesArray[numPoints];
-    sources = sourcesArray;
-    alGenSources((ALsizei)numPoints, sources);
-    cout << "3" << endl;
 
     // transform the Point32s into audio sources
     for (int i = 0; i < numPoints; i++) {
         geometry_msgs::Point32 curPt = pc.points[i];
 
-        // first we assign the point's source a tone
-        alSourcei(sources[i], AL_BUFFER, c_buffer);
+        // first we load data into the buffer
+        alBufferData(buffers[i], format, data, size, freq);
         // check for errors
-        ALCenum error;
+        error = alGetError();
+        if (error != AL_NO_ERROR) {
+            cout << "could not load c_buffer" << error << endl;
+            return;
+        }
+
+        // then we assign the point's source a tone
+        alSourcei(sources[i], AL_BUFFER, buffers[i]);
+        // check for errors
         error = alGetError();
         if (error != AL_NO_ERROR) {
             cout << "could not assign buffer to source" << endl;
@@ -172,6 +183,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
             cout << "could not set source properties" << endl;
             return;
         }
+
 
         // start sound from the source
         alSourcePlay(sources[i]);
