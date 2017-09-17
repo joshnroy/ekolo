@@ -4,6 +4,7 @@
 #include <AL/alc.h>
 #include <AL/alut.h>
 #include <unistd.h>
+#include <mutex>
 
 #include "sensor_msgs/PointCloud.h"
 #include "geometry_msgs/Point32.h"
@@ -28,7 +29,7 @@ class SoundController {
 
 SoundController::SoundController() {
 
-    m.lock();
+    this->m.lock();
     
     ALCdevice *device;
 
@@ -111,12 +112,12 @@ SoundController::SoundController() {
         return;
     }
 
-    m.unlock();
+    this->m.unlock();
 
 }
 
 SoundController::~SoundController() {
-    m.lock();
+    this->m.lock();
 	alDeleteSources(this->numSources, this->sources);
     alDeleteBuffers(1, &c_buffer);
     ALCdevice *device = alcGetContextsDevice(context);
@@ -127,7 +128,7 @@ SoundController::~SoundController() {
 
 void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
 
-    m.lock();
+    this->m.lock();
 
     cout << "thing" << endl;
     alDeleteSources(this->numSources, this->sources);
@@ -183,7 +184,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
     cout << "4" << endl;
 
     cout << "finished" << endl;
-    m.unlock();
+    this->m.unlock();
 }
 
 int main(int argc, char **argv) {

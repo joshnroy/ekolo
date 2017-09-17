@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 SET(GCC_COVERAGE_LINK_FLAGS    "-lopenal -lalut")
+set(CMAKE_CXX_STANDARD 11)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
