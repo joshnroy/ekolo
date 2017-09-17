@@ -29,6 +29,7 @@ class SoundController {
 
 SoundController::SoundController() {
 
+    cout << "LOCKING MOOTEX" << endl;
     this->m.lock();
     
     ALCdevice *device;
@@ -73,7 +74,9 @@ SoundController::SoundController() {
 
     ALuint source;
 
-    alGenSources((ALuint)1, &source);
+    alGenSources((ALsizei)1, &source);
+    this->sources = new ALuint[MAX_SOURCES];
+    this->buffers = new ALuint[MAX_SOURCES];
     // check for errors
 
 
@@ -96,6 +99,7 @@ SoundController::~SoundController() {
     alcMakeContextCurrent(NULL);
     alcDestroyContext(context);
     alcCloseDevice(device);
+    this->m.unlock();
 }
 
 void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
@@ -104,10 +108,15 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
 
     // this will store the error results
     ALCenum error;
+    alGetError();
 
     cout << "thing" << endl;
     alDeleteSources(this->numPoints, this->sources);
+    error = alGetError();
+    cout << error << endl;
     cout << "1" << endl;
+    
+    alDeleteBuffers(this->numPoints, this->buffers);
 
     this->numPoints = pc.points.size();
     if (this->numPoints > MAX_SOURCES)
@@ -116,19 +125,20 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
     //cout << sources << ", " << numPoints << endl;
 
 
-    ALuint sourcesArray[this->numPoints];
-    sources = sourcesArray;
-    alGenSources((ALsizei)this->numPoints, sources);
+    alGenSources((ALsizei)MAX_SOURCES, this->sources);
+    cout << "2.5" << endl;
 
     error = alGetError();
+    cout << error << endl;
+    cout << "2.6" << endl;
     if (error != AL_NO_ERROR) {
+	assert(1 == 0);
         cout << "could not generate the sources";
         return;
     }
+    cout << "2.75" << endl;
 
-    ALuint buffersArray[this->numPoints];
-    buffers = buffersArray;
-    alGenBuffers((ALuint)this->numPoints, buffers);
+    alGenBuffers((ALuint)this->numPoints, this->buffers);
     // check for errors
 
     error = alGetError();
@@ -136,6 +146,8 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
         cout << "could not generate the buffers";
         return;
     }
+
+    cout << "2.95" << endl;
 
     ALsizei size, freq;
     ALenum format;
@@ -152,10 +164,11 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
 
     // transform the Point32s into audio sources
     for (int i = 0; i < numPoints; i++) {
+	cout << "hi " << i << endl;
         geometry_msgs::Point32 curPt = pc.points[i];
 
         // first we load data into the buffer
-        alBufferData(buffers[i], format, data, size, freq);
+        alBufferData(this->buffers[i], format, data, size, freq);
         // check for errors
         error = alGetError();
         if (error != AL_NO_ERROR) {
@@ -164,7 +177,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
         }
 
         // then we assign the point's source a tone
-        alSourcei(sources[i], AL_BUFFER, buffers[i]);
+        alSourcei(sources[i], AL_BUFFER, this->buffers[i]);
         // check for errors
         error = alGetError();
         if (error != AL_NO_ERROR) {
@@ -175,7 +188,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
         // then we set the source to the point's position
         alSourcef(sources[i], AL_PITCH, 1);
         alSourcef(sources[i], AL_GAIN, 1);
-        alSource3f(sources[i], AL_POSITION, curPt.x, curPt.y, curPt.z);
+        alSource3f(sources[i], AL_POSITION, curPt.x * 100, curPt.y * 100, curPt.z * 100);
         alSource3f(sources[i], AL_VELOCITY, 0, 0, 0);
         alSourcei(sources[i], AL_LOOPING, AL_TRUE);
         error = alGetError();
@@ -197,6 +210,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
 
     cout << "finished" << endl;
     this->m.unlock();
+    cout << "unlocking" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -206,6 +220,7 @@ int main(int argc, char **argv) {
 
     ros::NodeHandle n;
     ros::Subscriber sub = n.subscribe("/slam/pointcloud", 1, &SoundController::displayPoints, &sc);
+    ros::Subscriber camera_sub = n.subscribe("/slam/pos", 1, &SoundController::displayPoints, &sc);
 
     ros::spin();
 
