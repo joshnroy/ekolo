@@ -203,3 +203,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(sounder src/sounder.cpp)
 target_link_libraries(sounder ${catkin_LIBRARIES})
 add_dependencies(sounder ekolo)
+
+add_executable(soundController src/soundController.cpp)
+target_link_libraries(soundController ${catkin_LIBRARIES} openal alut)
+add_dependencies(soundController ekolo)
