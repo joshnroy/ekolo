@@ -23,9 +23,12 @@ class SoundController {
         ALuint numSources;
         ALuint c_buffer;
         ALCcontext *context;
+        mutex m;
 };
 
 SoundController::SoundController() {
+
+    m.lock();
     
     ALCdevice *device;
 
@@ -108,9 +111,12 @@ SoundController::SoundController() {
         return;
     }
 
+    m.unlock();
+
 }
 
 SoundController::~SoundController() {
+    m.lock();
 	alDeleteSources(this->numSources, this->sources);
     alDeleteBuffers(1, &c_buffer);
     ALCdevice *device = alcGetContextsDevice(context);
@@ -120,6 +126,8 @@ SoundController::~SoundController() {
 }
 
 void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
+
+    m.lock();
 
     cout << "thing" << endl;
     alDeleteSources(this->numSources, this->sources);
@@ -175,6 +183,7 @@ void SoundController::displayPoints(sensor_msgs::PointCloud pc) {
     cout << "4" << endl;
 
     cout << "finished" << endl;
+    m.unlock();
 }
 
 int main(int argc, char **argv) {
