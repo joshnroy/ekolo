@@ -93,7 +93,7 @@ SoundController::SoundController() {
     ALvoid *data;
     ALboolean loop = AL_FALSE;
 
-    alutLoadWAVFile((ALbyte*)"/home/lkasser/Programming/HackMIT2017/catkin/src/ekolo/src/c.wav", &format, &data, &size, &freq, &loop);
+    alutLoadWAVFile((ALbyte*)"c.wav", &format, &data, &size, &freq, &loop);
     error = alGetError();
     if (error != AL_NO_ERROR) {
         cout << "could not load .wav file" << endl;
