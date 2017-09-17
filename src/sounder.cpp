@@ -1,8 +1,15 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
+#include <iostream>
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alut.h>
+#include <unistd.h>
+#include <math.h>
 
-void soundcallback(const sensor_msgs::PointCloud2::ConstPtr& msg)
-{
+using namespace std;
+
+void soundcallback(const sensor_msgs::PointCloud2::ConstPtr& msg) {
 }
 
 int main(int argc, char **argv)
